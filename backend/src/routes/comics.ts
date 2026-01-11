@@ -157,7 +157,7 @@ async function streamImage(c: any, imagePath: string): Promise<Response> {
         headers: {
             'Content-Type': mimeType,
             'Content-Length': stats.size.toString(),
-            'Cache-Control': 'public, max-age=2592000, immutable',
+            'Cache-Control': 'public, max-age=31536000, immutable',
             'ETag': etag,
         },
     })
