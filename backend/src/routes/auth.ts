@@ -164,7 +164,12 @@ auth.get('/callback', async (c) => {
  * POST /auth/logout - Clear session
  */
 auth.post('/logout', (c) => {
-    deleteCookie(c, SESSION_COOKIE)
+    deleteCookie(c, SESSION_COOKIE, {
+        path: '/',
+        domain: COOKIE_DOMAIN,
+        secure: IS_PRODUCTION,
+        sameSite: COOKIE_DOMAIN ? 'None' : 'Lax',
+    })
     return c.json({ success: true })
 })
 
@@ -181,7 +186,12 @@ auth.get('/me', (c) => {
     const session = verifySessionToken(sessionToken)
 
     if (!session) {
-        deleteCookie(c, SESSION_COOKIE)
+        deleteCookie(c, SESSION_COOKIE, {
+            path: '/',
+            domain: COOKIE_DOMAIN,
+            secure: IS_PRODUCTION,
+            sameSite: COOKIE_DOMAIN ? 'None' : 'Lax',
+        })
         return c.json({ user: null })
     }
 
