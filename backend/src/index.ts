@@ -61,11 +61,13 @@ app.use('/api/*', async (c, next) => {
     if (path.includes('/cover') || path.match(/\/pages\/\d+/)) {
         if (!c.res.headers.has('Cache-Control')) {
             c.header('Cache-Control', 'public, max-age=31536000, immutable')
+            c.header('CDN-Cache-Control', 'public, max-age=31536000')  // For Cloudflare edge
         }
     }
-    // Short cache for listings (5 minutes)
+    // Short cache for listings (5 minutes browser, 10 minutes CDN)
     else if (path === '/api/comics' || path.endsWith('/pages')) {
-        c.header('Cache-Control', 'public, max-age=300, s-maxage=600')
+        c.header('Cache-Control', 'public, max-age=300')
+        c.header('CDN-Cache-Control', 'public, max-age=600')  // For Cloudflare edge
     }
 })
 
