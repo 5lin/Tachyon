@@ -57,10 +57,10 @@ app.use('/api/*', async (c, next) => {
     await next()
     const path = c.req.path
 
-    // Long cache for images (30 days)
+    // Long cache for images (1 year)
     if (path.includes('/cover') || path.match(/\/pages\/\d+/)) {
         if (!c.res.headers.has('Cache-Control')) {
-            c.header('Cache-Control', 'public, max-age=2592000, immutable')
+            c.header('Cache-Control', 'public, max-age=31536000, immutable')
         }
     }
     // Short cache for listings (5 minutes)
