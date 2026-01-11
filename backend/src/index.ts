@@ -10,14 +10,15 @@ import { verifySessionToken, getOIDCConfig } from './utils/auth.js'
 
 const app = new Hono()
 
-// CORS for frontend (dev + production)
+// CORS origins from env (comma-separated) + default dev origins
+const corsOrigins = [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    ...(process.env.CORS_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean) || []),
+]
+
 app.use('/*', cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:4173',
-        'https://tachyon-comic.pages.dev',
-        'https://comic.log.edu.kg',
-    ],
+    origin: corsOrigins,
     credentials: true,
 }))
 
