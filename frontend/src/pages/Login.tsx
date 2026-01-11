@@ -1,10 +1,12 @@
 import { useTheme } from '../contexts/ThemeContext'
 
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 export default function Login() {
     const { theme, toggleTheme } = useTheme()
 
     const handleLogin = () => {
-        window.location.href = '/api/auth/login'
+        window.location.href = `${API_BASE}/api/auth/login`
     }
 
     return (

@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 interface User {
     id: string
     name: string
@@ -31,13 +33,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function checkAuth() {
         try {
             // Check config first
-            const configRes = await fetch('/api/config')
+            const configRes = await fetch(`${API_BASE}/api/config`)
             if (configRes.ok) {
                 const config = await configRes.json()
                 setAuthEnabled(config.authEnabled)
 
                 if (config.authEnabled) {
-                    const res = await fetch('/api/auth/me')
+                    const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
                     if (res.ok) {
                         const data = await res.json()
                         setUser(data.user)
@@ -52,12 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const login = () => {
-        window.location.href = '/api/auth/login'
+        window.location.href = `${API_BASE}/api/auth/login`
     }
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', { method: 'POST' })
+            await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' })
             setUser(null)
             window.location.href = '/'
         } catch {
