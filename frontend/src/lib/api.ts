@@ -28,7 +28,7 @@ export interface PagesResponse {
  * Fetch all comics
  */
 export async function fetchComics(): Promise<ComicsResponse> {
-    const res = await fetch(`${API_BASE}/api/comics`)
+    const res = await fetch(`${API_BASE}/api/comics`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch comics')
     return res.json()
 }
@@ -37,7 +37,7 @@ export async function fetchComics(): Promise<ComicsResponse> {
  * Fetch pages of a comic
  */
 export async function fetchPages(comicId: string): Promise<PagesResponse> {
-    const res = await fetch(`${API_BASE}/api/comics/${comicId}/pages`)
+    const res = await fetch(`${API_BASE}/api/comics/${comicId}/pages`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch pages')
     return res.json()
 }
