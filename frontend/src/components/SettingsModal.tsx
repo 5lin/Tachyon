@@ -1,34 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useI18n } from '../contexts/I18nContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { useSettings } from '../contexts/SettingsContext'
 
 interface SettingsModalProps {
     isOpen: boolean
     onClose: () => void
+    initialTab?: Tab
 }
 
-type Tab = 'general' | 'reader' | 'about'
+type Tab = 'general' | 'appearance' | 'reader' | 'about'
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, initialTab = 'general' }: SettingsModalProps) {
     const { t, language, setLanguage } = useI18n()
     const { theme, setTheme } = useTheme()
-    const [activeTab, setActiveTab] = useState<Tab>('general')
+    const {
+        viewMode, setViewMode,
+        itemsPerPage, setItemsPerPage,
+        preloadCount, setPreloadCount
+    } = useSettings()
 
-    // Preload Logic
-    const [preloadCount, setPreloadCount] = useState(() => {
-        return parseInt(localStorage.getItem('tachyon-preload-count') || '3')
-    })
+    const [activeTab, setActiveTab] = useState<Tab>(initialTab)
 
     useEffect(() => {
         if (isOpen) {
-            setPreloadCount(parseInt(localStorage.getItem('tachyon-preload-count') || '3'))
+            setActiveTab(initialTab)
         }
-    }, [isOpen])
-
-    const handlePreloadChange = (count: number) => {
-        setPreloadCount(count)
-        localStorage.setItem('tachyon-preload-count', count.toString())
-    }
+    }, [isOpen, initialTab])
 
     if (!isOpen) return null
 
@@ -39,6 +37,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+            )
+        },
+        {
+            id: 'appearance' as Tab,
+            label: t('appearance'),
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             )
         },
@@ -82,8 +89,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                                    ? 'bg-[var(--color-bg-hover)] text-[var(--color-text)] shadow-sm'
-                                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]'
+                                ? 'bg-[var(--color-bg-hover)] text-[var(--color-text)] shadow-sm'
+                                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]'
                                 }`}
                         >
                             <span className={`transition-colors ${activeTab === tab.id ? 'text-[var(--color-accent)]' : ''}`}>
@@ -117,15 +124,71 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="flex-1 overflow-y-auto p-8">
                         {activeTab === 'general' && (
                             <div className="space-y-8 animate-fade-in">
-                                {/* Appearance */}
+                                {/* Language */}
+                                <section className="space-y-4">
+                                    <h4 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('language')}</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => setLanguage('en')}
+                                            className={`p-4 rounded-xl border transition-all text-left ${language === 'en'
+                                                ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
+                                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-800">EN</div>
+                                                <span className="font-medium">English</span>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            onClick={() => setLanguage('zh')}
+                                            className={`p-4 rounded-xl border transition-all text-left ${language === 'zh'
+                                                ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
+                                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-red-800">ZH</div>
+                                                <span className="font-medium">中文</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </section>
+
+                                {/* Pagination */}
+                                <section className="space-y-4">
+                                    <h4 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Pagination</h4>
+                                    <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-1 flex">
+                                        {[24, 48, 72, 96].map(count => (
+                                            <button
+                                                key={count}
+                                                onClick={() => setItemsPerPage(count)}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${itemsPerPage === count
+                                                    ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text)] shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                                                    }`}
+                                            >
+                                                {count}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-sm text-[var(--color-text-muted)]">Comics per page</p>
+                                </section>
+                            </div>
+                        )}
+
+                        {activeTab === 'appearance' && (
+                            <div className="space-y-8 animate-fade-in">
+                                {/* Theme */}
                                 <section className="space-y-4">
                                     <h4 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('appearance')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
                                             onClick={() => setTheme('light')}
                                             className={`p-4 rounded-xl border transition-all text-left group ${theme === 'light'
-                                                    ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
-                                                    : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
+                                                ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
+                                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between mb-3">
@@ -142,8 +205,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                         <button
                                             onClick={() => setTheme('dark')}
                                             className={`p-4 rounded-xl border transition-all text-left group ${theme === 'dark'
-                                                    ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
-                                                    : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
+                                                ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
+                                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between mb-3">
@@ -159,34 +222,42 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     </div>
                                 </section>
 
-                                {/* Language */}
+                                {/* View Mode */}
                                 <section className="space-y-4">
-                                    <h4 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('language')}</h4>
+                                    <h4 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('gridView')} / {t('listView')}</h4>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
-                                            onClick={() => setLanguage('en')}
-                                            className={`p-4 rounded-xl border transition-all text-left ${language === 'en'
-                                                    ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
-                                                    : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
+                                            onClick={() => setViewMode('grid')}
+                                            className={`p-4 rounded-xl border transition-all text-left ${viewMode === 'grid'
+                                                ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
+                                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                                                 }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-800">EN</div>
-                                                <span className="font-medium">English</span>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]' : 'bg-[var(--color-bg-hover)] text-[var(--color-text-muted)]'}`}>
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                                    </svg>
+                                                </div>
                                             </div>
+                                            <span className="font-medium">{t('gridView')}</span>
                                         </button>
 
                                         <button
-                                            onClick={() => setLanguage('zh')}
-                                            className={`p-4 rounded-xl border transition-all text-left ${language === 'zh'
-                                                    ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
-                                                    : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
+                                            onClick={() => setViewMode('list')}
+                                            className={`p-4 rounded-xl border transition-all text-left ${viewMode === 'list'
+                                                ? 'bg-[var(--color-bg-card)] border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]'
+                                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                                                 }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-red-800">ZH</div>
-                                                <span className="font-medium">中文</span>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]' : 'bg-[var(--color-bg-hover)] text-[var(--color-text-muted)]'}`}>
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                                    </svg>
+                                                </div>
                                             </div>
+                                            <span className="font-medium">{t('listView')}</span>
                                         </button>
                                     </div>
                                 </section>
@@ -201,10 +272,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                         {[3, 5, 10, 999].map(count => (
                                             <button
                                                 key={count}
-                                                onClick={() => handlePreloadChange(count)}
+                                                onClick={() => setPreloadCount(count)}
                                                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${preloadCount === count
-                                                        ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text)] shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                                                    ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text)] shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                                                     }`}
                                             >
                                                 {count === 999 ? 'All' : count}

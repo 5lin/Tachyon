@@ -10,6 +10,8 @@ export interface ComicInfo {
 export interface ComicsResponse {
     count: number
     comics: ComicInfo[]
+    page: number
+    totalPages: number
 }
 
 export interface PageInfo {
@@ -25,10 +27,10 @@ export interface PagesResponse {
 }
 
 /**
- * Fetch all comics
+ * Fetch all comics with pagination
  */
-export async function fetchComics(): Promise<ComicsResponse> {
-    const res = await fetch(`${API_BASE}/api/comics`, { credentials: 'include' })
+export async function fetchComics(page = 1, limit = 24): Promise<ComicsResponse> {
+    const res = await fetch(`${API_BASE}/api/comics?page=${page}&limit=${limit}`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch comics')
     return res.json()
 }

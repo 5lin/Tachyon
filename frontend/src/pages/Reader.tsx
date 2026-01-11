@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { fetchPages, getPageUrl, type PagesResponse } from '../lib/api'
 import { useI18n } from '../contexts/I18nContext'
+import { useSettings } from '../contexts/SettingsContext'
+import SettingsModal from '../components/SettingsModal'
 
 export default function Reader() {
     const { id } = useParams<{ id: string }>()
@@ -58,11 +60,10 @@ export default function Reader() {
         }
     }, [id, comic, currentPage])
 
-    const [showSettings, setShowSettings] = useState(false)
-    const [preloadCount, setPreloadCount] = useState(() => {
-        const saved = localStorage.getItem('tachyon-preload-count')
-        return saved ? parseInt(saved, 10) : 3
-    })
+
+
+    const { preloadCount } = useSettings()
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
     // Preload images
     useEffect(() => {
@@ -89,12 +90,6 @@ export default function Reader() {
             }
         })
     }, [id, comic, currentPage, preloadCount])
-
-    // Save preload setting
-    const updatePreloadCount = (count: number) => {
-        setPreloadCount(count)
-        localStorage.setItem('tachyon-preload-count', count.toString())
-    }
 
     // Reset zoom on page change
     useEffect(() => {
@@ -335,8 +330,8 @@ export default function Reader() {
                     {/* Settings Button */}
                     <div className="relative">
                         <button
-                            onClick={() => setShowSettings(!showSettings)}
-                            className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${showSettings ? 'bg-indigo-600 text-white' : 'hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200'}`}
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
                             title={t('settings')}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,31 +339,6 @@ export default function Reader() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                         </button>
-
-                        {/* Settings Popup */}
-                        {showSettings && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowSettings(false)} />
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl z-50 p-4">
-                                    <h3 className="text-neutral-300 font-medium text-sm mb-3">{t('preloadPages')}</h3>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {[3, 5, 10, -1].map((count) => (
-                                            <button
-                                                key={count}
-                                                onClick={() => updatePreloadCount(count)}
-                                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${preloadCount === count
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200'
-                                                    }`}
-                                            >
-                                                {count === -1 ? 'All' : count}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <p className="mt-3 text-xs text-neutral-500">{t('preloadHint')}</p>
-                                </div>
-                            </>
-                        )}
                     </div>
                 </div>
             </header>
@@ -568,6 +538,11 @@ export default function Reader() {
                 </div>
             </footer>
 
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                initialTab="reader"
+            />
         </div>
     )
 }

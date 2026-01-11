@@ -14,15 +14,71 @@ const comics = new Hono()
 
 const COMICS_DIR = process.env.COMICS_DIR || '/opt/comics'
 
+// Simple in-memory cache
+let comicsCache: {
+    data: any[]
+    lastUpdated: number
+} | null = null
+
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 /**
  * GET /comics - List all comics
  * Cache-friendly: returns stable JSON with comic IDs
+ * Supports ?refresh=true to force cache update
  */
 comics.get('/comics', (c) => {
+    const forceRefresh = c.req.query('refresh') === 'true'
+    const now = Date.now()
+
+    // Use cache if valid and not forcing refresh
+    if (!forceRefresh && comicsCache && (now - comicsCache.lastUpdated < CACHE_DURATION)) {
+        // Apply pagination on cached data
+        const comicsList = comicsCache.data
+        const page = Math.max(1, parseInt(c.req.query('page') || '1'))
+        const limit = Math.max(1, parseInt(c.req.query('limit') || '2000'))
+
+        const startIndex = (page - 1) * limit
+        const endIndex = startIndex + limit
+        const paginatedComics = comicsList.slice(startIndex, endIndex)
+
+        // Add X-Cache header to indicate HIT
+        c.header('X-Server-Cache', 'HIT')
+
+        return c.json({
+            count: comicsList.length,
+            comics: paginatedComics,
+            page,
+            totalPages: Math.ceil(comicsList.length / limit)
+        })
+    }
+
+    // Cache MISS or refresh requested
+    console.log('[Comics] Scanning directory...')
     const comicsList = scanComics(COMICS_DIR)
+
+    // Update cache
+    comicsCache = {
+        data: comicsList,
+        lastUpdated: now
+    }
+
+    // Pagination
+    const page = Math.max(1, parseInt(c.req.query('page') || '1'))
+    const limit = Math.max(1, parseInt(c.req.query('limit') || '2000'))
+
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedComics = comicsList.slice(startIndex, endIndex)
+
+    // Add X-Cache header to indicate MISS
+    c.header('X-Server-Cache', 'MISS')
+
     return c.json({
         count: comicsList.length,
-        comics: comicsList,
+        comics: paginatedComics,
+        page,
+        totalPages: Math.ceil(comicsList.length / limit)
     })
 })
 

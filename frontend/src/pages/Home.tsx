@@ -3,46 +3,71 @@ import { fetchComics, getCoverUrl, type ComicInfo } from '../lib/api'
 import { useTheme } from '../contexts/ThemeContext'
 import { useI18n } from '../contexts/I18nContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useSettings } from '../contexts/SettingsContext'
 import ComicCard from '../components/ComicCard'
 import SortDropdown from '../components/SortDropdown'
 import SettingsModal from '../components/SettingsModal'
 
 type SortOption = 'name' | 'pages' | 'pages-desc'
-type ViewMode = 'grid' | 'list'
 
 export default function Home() {
     const { theme, toggleTheme } = useTheme()
     const { language, setLanguage, t } = useI18n()
     const { user, authEnabled, login, logout } = useAuth()
+    const { viewMode, setViewMode, itemsPerPage } = useSettings()
+
+    // Data State
     const [comics, setComics] = useState<ComicInfo[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // Pagination State
+    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(true)
 
     // UI State
     const [search, setSearch] = useState('')
     const [sort, setSort] = useState<SortOption>('name')
-    const [view, setView] = useState<ViewMode>(() => {
-        const saved = localStorage.getItem('tachyon-view')
-        return (saved === 'list' ? 'list' : 'grid') as ViewMode
-    })
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
+    // Reset pagination when settings change
     useEffect(() => {
-        fetchComics()
-            .then((data) => {
-                setComics(data.comics)
-                setLoading(false)
-            })
-            .catch((err) => {
-                setError(err.message)
-                setLoading(false)
-            })
-    }, [])
+        setPage(1)
+        setComics([])
+        setLoading(true)
+        loadComics(1, true)
+    }, [itemsPerPage])
 
-    // Save view preference
-    useEffect(() => {
-        localStorage.setItem('tachyon-view', view)
-    }, [view])
+    const loadComics = async (pageNum: number, isReset = false) => {
+        try {
+            const data = await fetchComics(pageNum, itemsPerPage)
+
+            setComics(prev => {
+                if (isReset) return data.comics
+                // Deduplicate just in case
+                const newComics = data.comics.filter(c => !prev.some(p => p.id === c.id))
+                return [...prev, ...newComics]
+            })
+
+            setHasMore(pageNum < data.totalPages)
+            setLoading(false)
+            setLoadingMore(false)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load comics')
+            setLoading(false)
+            setLoadingMore(false)
+        }
+    }
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            setLoadingMore(true)
+            const nextPage = page + 1
+            setPage(nextPage)
+            loadComics(nextPage)
+        }
+    }
 
     // Filtered and sorted comics
     const filteredComics = useMemo(() => {
@@ -256,9 +281,22 @@ export default function Home() {
                                     <p className="text-xs text-[var(--color-text-muted)] truncate">{user.email}</p>
                                 </div>
                                 <button
-                                    onClick={logout}
-                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-[var(--color-bg-hover)] transition-colors"
+                                    onClick={() => setIsSettingsOpen(true)}
+                                    className="w-full text-left px-4 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg-hover)] transition-colors flex items-center gap-2"
                                 >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    {t('settings')}
+                                </button>
+                                <button
+                                    onClick={logout}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-[var(--color-bg-hover)] transition-colors flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
                                     {t('logout')}
                                 </button>
                             </div>
@@ -277,18 +315,18 @@ export default function Home() {
                     {/* View Toggle */}
                     <div className="view-toggle">
                         <button
-                            onClick={() => setView('grid')}
+                            onClick={() => setViewMode('grid')}
                             title={t('gridView')}
-                            className={`view-btn ${view === 'grid' ? 'active' : ''}`}
+                            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                             </svg>
                         </button>
                         <button
-                            onClick={() => setView('list')}
+                            onClick={() => setViewMode('list')}
                             title={t('listView')}
-                            className={`view-btn ${view === 'list' ? 'active' : ''}`}
+                            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -305,7 +343,7 @@ export default function Home() {
                 {/* Content */}
                 {loading && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
-                        {[...Array(14)].map((_, i) => (
+                        {[...Array(itemsPerPage)].map((_, i) => (
                             <div key={i} className="comic-card">
                                 <div className="aspect-[2/3] rounded-lg loading-shimmer mb-2.5" />
                                 <div className="h-4 rounded loading-shimmer w-3/4" />
@@ -354,7 +392,7 @@ export default function Home() {
                 )}
 
                 {/* Grid View */}
-                {!loading && !error && filteredComics.length > 0 && view === 'grid' && (
+                {!loading && !error && filteredComics.length > 0 && viewMode === 'grid' && (
                     <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
                         {filteredComics.map((comic, index) => (
                             <div
@@ -375,7 +413,7 @@ export default function Home() {
                 )}
 
                 {/* List View */}
-                {!loading && !error && filteredComics.length > 0 && view === 'list' && (
+                {!loading && !error && filteredComics.length > 0 && viewMode === 'list' && (
                     <section className="space-y-3">
                         {filteredComics.map((comic, index) => (
                             <div
@@ -393,6 +431,22 @@ export default function Home() {
                             </div>
                         ))}
                     </section>
+                )}
+
+                {/* Load More Button */}
+                {!loading && !error && hasMore && !search && (
+                    <div className="flex justify-center mt-10 mb-6">
+                        <button
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text)] px-8 py-3 rounded-full font-medium transition-all shadow-sm flex items-center gap-2"
+                        >
+                            {loadingMore && (
+                                <div className="w-4 h-4 border-2 border-[var(--color-text)] border-t-transparent rounded-full animate-spin" />
+                            )}
+                            {loadingMore ? 'Loading more...' : 'Load Mode Comics'}
+                        </button>
+                    </div>
                 )}
             </main>
 
