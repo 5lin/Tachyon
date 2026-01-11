@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { getCookie } from 'hono/cookie'
 import { serve } from '@hono/node-server'
+import { logger } from 'hono/logger'
 import { comicsRouter } from './routes/comics.js'
 import { authRouter } from './routes/auth.js'
 import { verifySessionToken, getOIDCConfig } from './utils/auth.js'
@@ -21,6 +22,9 @@ app.use('/*', cors({
     origin: corsOrigins,
     credentials: true,
 }))
+
+// Logger
+app.use('*', logger())
 
 // Check if OIDC is configured
 const isAuthEnabled = () => {
