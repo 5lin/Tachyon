@@ -63,9 +63,12 @@ app.use('/api/*', async (c, next) => {
             c.header('Cache-Control', 'public, max-age=31536000, immutable')
         }
     }
-    // List & Info cache (1 day for personal use)
+    // List & Info - NO CACHE for security (must re-validate auth)
+    // Images are safe to cache because URLs are hard to guess
     else if (path === '/api/comics' || path.endsWith('/pages') || path.match(/\/api\/comics\/[^\/]+$/)) {
-        c.header('Cache-Control', 'public, max-age=86400')
+        c.header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        c.header('Pragma', 'no-cache')
+        c.header('Expires', '0')
     }
 })
 
