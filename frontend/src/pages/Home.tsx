@@ -35,11 +35,13 @@ export default function Home() {
 
     // Reset pagination when settings change
     useEffect(() => {
+        if (authEnabled && !user) return
+
         setPage(1)
         setComics([])
         setLoading(true)
         loadComics(1, true)
-    }, [itemsPerPage])
+    }, [itemsPerPage, authEnabled, user])
 
     // Back to top visibility
     useEffect(() => {

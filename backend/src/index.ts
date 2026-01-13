@@ -54,10 +54,6 @@ app.use('/api/*', async (c, next) => {
     }
 })
 
-// Routes
-app.route('/api/auth', authRouter)
-app.route('/api', comicsRouter)
-
 // Health check
 app.get('/health', (c) => c.json({
     status: 'ok',
@@ -69,6 +65,10 @@ app.get('/health', (c) => c.json({
 app.get('/api/config', (c) => c.json({
     authEnabled: isAuthEnabled(),
 }))
+
+// Routes
+app.route('/api/auth', authRouter)
+app.route('/api', comicsRouter)
 
 import { initScanner } from './utils/scanner.js'
 
