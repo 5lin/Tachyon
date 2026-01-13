@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { fetchPages, getPageUrl, API_BASE, type PagesResponse } from '../lib/api'
+import { fetchPages, API_BASE, type PagesResponse } from '../lib/api'
 import { useI18n } from '../contexts/I18nContext'
 import { useSettings } from '../contexts/SettingsContext'
 import SettingsModal from '../components/SettingsModal'
