@@ -39,6 +39,7 @@ export default function Reader() {
 
         fetchPages(id)
             .then((data) => {
+                console.log('[DEBUG] Comic Pages Response:', data)
                 setComic(data)
                 setLoading(false)
 
