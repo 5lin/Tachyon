@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { fetchComics, getCoverUrl, type ComicInfo } from '../lib/api'
+import { fetchComics, getCoverUrl, API_BASE, type ComicInfo } from '../lib/api'
 import { useTheme } from '../contexts/ThemeContext'
 import { useI18n } from '../contexts/I18nContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -13,7 +13,7 @@ type SortOption = 'name' | 'pages' | 'pages-desc'
 export default function Home() {
     const { theme, toggleTheme } = useTheme()
     const { language, setLanguage, t } = useI18n()
-    const { user, authEnabled, login, logout } = useAuth()
+    const { user, authEnabled, isLoading: authLoading, login, logout } = useAuth()
     const { viewMode, setViewMode, itemsPerPage } = useSettings()
 
     // Data State
@@ -35,13 +35,14 @@ export default function Home() {
 
     // Reset pagination when settings change
     useEffect(() => {
+        if (authLoading) return
         if (authEnabled && !user) return
 
         setPage(1)
         setComics([])
         setLoading(true)
         loadComics(1, true)
-    }, [itemsPerPage, authEnabled, user])
+    }, [itemsPerPage, authEnabled, user, authLoading])
 
     // Back to top visibility
     useEffect(() => {
@@ -449,7 +450,7 @@ export default function Home() {
                                 <ComicCard
                                     id={comic.id}
                                     name={comic.name}
-                                    coverUrl={getCoverUrl(comic.id)}
+                                    coverUrl={comic.cover ? `${API_BASE}${comic.cover}` : getCoverUrl(comic.id)}
                                     pageCount={comic.pageCount}
                                     view="grid"
                                 />
@@ -470,7 +471,7 @@ export default function Home() {
                                 <ComicCard
                                     id={comic.id}
                                     name={comic.name}
-                                    coverUrl={getCoverUrl(comic.id)}
+                                    coverUrl={comic.cover ? `${API_BASE}${comic.cover}` : getCoverUrl(comic.id)}
                                     pageCount={comic.pageCount}
                                     view="list"
                                 />

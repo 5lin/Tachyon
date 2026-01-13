@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { fetchPages, getPageUrl, type PagesResponse } from '../lib/api'
+import { fetchPages, getPageUrl, API_BASE, type PagesResponse } from '../lib/api'
 import { useI18n } from '../contexts/I18nContext'
 import { useSettings } from '../contexts/SettingsContext'
 import SettingsModal from '../components/SettingsModal'
@@ -85,7 +85,7 @@ export default function Reader() {
         toPreload.forEach((page) => {
             if (!preloadedRef.current.has(page)) {
                 const img = new Image()
-                img.src = getPageUrl(id, page)
+                img.src = `${API_BASE}${comic.pages[page].url}`
                 img.onload = () => preloadedRef.current.add(page)
             }
         })
@@ -371,7 +371,7 @@ export default function Reader() {
                 >
                     <img
                         key={currentPage}
-                        src={getPageUrl(id, currentPage)}
+                        src={`${API_BASE}${comic.pages[currentPage]?.url}`}
                         alt={`${currentPage + 1}`}
                         onLoad={() => setImageLoading(false)}
                         draggable={false}
@@ -523,7 +523,7 @@ export default function Reader() {
                                         }`}
                                 >
                                     <img
-                                        src={getPageUrl(id, i)}
+                                        src={`${API_BASE}${comic.pages[i]?.url}`}
                                         alt={`${i + 1}`}
                                         loading="lazy"
                                         className="w-full h-full object-cover"
