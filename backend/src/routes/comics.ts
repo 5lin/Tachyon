@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import { createReadStream, statSync } from 'fs'
+import { getCookie } from 'hono/cookie' // Added
+import { verifySessionToken, getOIDCConfig } from '../utils/auth.js' // Added
 import { join, resolve, extname } from 'path'
 import { Readable } from 'stream'
 import mime from 'mime-types'
@@ -11,6 +13,31 @@ import {
 } from '../utils/scanner.js'
 
 const comics = new Hono()
+
+// Auth Middleware: Protect all comic routes
+comics.use('*', async (c, next) => {
+    // Check config
+    const config = getOIDCConfig()
+    const isAuthEnabled = !!config.clientId
+
+    if (!isAuthEnabled) {
+        console.warn('[Security] Auth disabled (missing OIDC_CLIENT_ID), allowing public access.')
+        return next()
+    }
+
+    const sessionToken = getCookie(c, 'tachyon_session')
+    if (!sessionToken) {
+        return c.json({ error: 'Unauthorized: Missing Session Cookie' }, 401)
+    }
+
+    const session = verifySessionToken(sessionToken)
+    if (!session) {
+        return c.json({ error: 'Unauthorized: Invalid or Expired Session' }, 401)
+    }
+
+    // Attach session to context if needed, or just proceed
+    return next()
+})
 
 const COMICS_DIR = process.env.COMICS_DIR || '/opt/comics'
 

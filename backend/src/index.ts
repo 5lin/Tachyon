@@ -32,29 +32,7 @@ const isAuthEnabled = () => {
     return !!config.clientId
 }
 
-// Auth middleware - only apply if OIDC is configured
-app.use('/api/comics/*', async (c, next) => {
-    if (!isAuthEnabled()) {
-        // Auth disabled, allow all requests
-        return next()
-    }
 
-    const sessionToken = getCookie(c, 'tachyon_session')
-
-    if (!sessionToken) {
-        return c.json({ error: 'Unauthorized' }, 401)
-    }
-
-    const session = verifySessionToken(sessionToken)
-
-
-    if (!session) {
-        return c.json({ error: 'Session expired' }, 401)
-    }
-
-    // Session is valid, continue to next handler
-    return next()
-})
 
 // Cache headers middleware (CF Cache Rules handle edge caching)
 app.use('/api/*', async (c, next) => {
